@@ -1,0 +1,110 @@
+<?php
+
+namespace App\Console\Commands;
+
+use Illuminate\Console\Command;
+use App\Models\SslList;
+use Carbon\Carbon;
+
+class sslChecker extends Command
+{
+    /**
+     * The name and signature of the console command.
+     *
+     * @var string
+     */
+    protected $signature = 'ssl:checker {url?} {--A|all}'; //AD FLAG TO CHECK ALL URLS IN THE DB
+
+    /**
+     * The console command description.
+     *
+     * @var string
+     */
+    protected $description = 'Command description';
+
+    /**
+     * Create a new command instance.
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        parent::__construct();
+    }
+
+    /**
+     * Execute the console command.
+     *
+     * @return int
+     */
+    public function handle()
+    {
+        // dd($this->option('all'));
+        // dd($this->argument('url'));
+
+        if($this->option('all')) {
+            $sites = SslList::all();
+
+            foreach ($sites as $site) {
+                $curl_date = $this->checkSite($site->site);
+                if($curl_date->ne($site->expire_date)) {
+                    $site->expire_date = $curl_date->toDateTimeString();
+                    $site->save();
+                    $this->line('Site updated');
+                }else{
+                    $this->line('No update');
+                }
+            }
+            $this->line('Check Complete');
+            return 0;
+        }
+        $site = $this->argument('url');
+        $site = $this->checkUrl($site);
+        $curl_date = $this->checkSite($site);
+
+        if(!SslList::where('site', $site)->exists()){
+            $entry = new SslList();
+            $entry->site = $site;
+            $entry->expire_date = $curl_date->toDateTimeString();
+            $entry->save();
+            $this->info('Site Stored');
+        }else{
+            $this->info('Site Exists');
+        }
+        return 0;
+    }
+
+    public function checkUrl($site)
+    {
+        $url_parts = parse_url($site);
+        if(!empty($url_parts['path'])) {
+            return "https://{$url_parts['path']}";
+        }
+
+        if(!empty($url_parts['host'])) {
+            return "https://{$url_parts['path']}";
+        }
+    }
+
+    public function checkSite($site)
+    {
+        $call = curl_init();
+        curl_setopt($call, CURLOPT_URL, $site);
+        curl_setopt($call, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($call, CURLOPT_NOBODY, true);
+        // curl_setopt($call, CURLOPT_VERBOSE, 1);
+        curl_setopt($call, CURLOPT_AUTOREFERER, true);
+        curl_setopt($call, CURLOPT_CERTINFO, true);
+        curl_exec($call);
+        curl_close($call);
+
+        $info = curl_getinfo($call);
+
+        return new Carbon($info['certinfo'][0]['Expire date']);
+    }
+
+    public function storeSite()
+    {
+
+    }
+}
