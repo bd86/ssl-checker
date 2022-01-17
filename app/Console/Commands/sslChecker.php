@@ -96,9 +96,9 @@ class sslChecker extends Command
         curl_setopt($call, CURLOPT_AUTOREFERER, true);
         curl_setopt($call, CURLOPT_CERTINFO, true);
         curl_exec($call);
+        $info = curl_getinfo($call);
         curl_close($call);
 
-        $info = curl_getinfo($call);
 
         return new Carbon($info['certinfo'][0]['Expire date']);
     }
