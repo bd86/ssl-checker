@@ -46,9 +46,9 @@ class sslChecker extends Command
             $sites = SslList::all();
 
             foreach ($sites as $site) {
-                $curl_date = $this->checkSite($site->site);
-                if($curl_date->ne($site->expire_date)) {
-                    $site->expire_date = $curl_date->toDateTimeString();
+                $ssl_expire_date = $this->getCertExperation($site->site);
+                if($ssl_expire_date->ne($site->expire_date)) {
+                    $site->expire_date = $ssl_expire_date->toDateTimeString();
                     $site->save();
                     $this->line('Site updated');
                 }else{
@@ -60,12 +60,12 @@ class sslChecker extends Command
         }
         $site = $this->argument('url');
         $site = $this->checkUrl($site);
-        $curl_date = $this->checkSite($site);
+        $ssl_expire_date = $this->getCertExperation($site);
 
         if(!SslList::where('site', $site)->exists()){
             $entry = new SslList();
             $entry->site = $site;
-            $entry->expire_date = $curl_date->toDateTimeString();
+            $entry->expire_date = $ssl_expire_date->toDateTimeString();
             $entry->save();
             $this->info('Site Stored');
         }else{
@@ -86,7 +86,7 @@ class sslChecker extends Command
         }
     }
 
-    public function checkSite($site)
+    public function getCertExperation($site)
     {
         $call = curl_init();
         curl_setopt($call, CURLOPT_URL, $site);
@@ -98,7 +98,6 @@ class sslChecker extends Command
         curl_exec($call);
         $info = curl_getinfo($call);
         curl_close($call);
-
 
         return new Carbon($info['certinfo'][0]['Expire date']);
     }
