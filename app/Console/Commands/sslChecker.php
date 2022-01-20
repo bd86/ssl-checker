@@ -39,9 +39,6 @@ class sslChecker extends Command
      */
     public function handle()
     {
-        // dd($this->option('all'));
-        // dd($this->argument('url'));
-
         if($this->option('all')) {
             $sites = SslList::all();
 
