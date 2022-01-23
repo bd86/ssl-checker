@@ -49,7 +49,7 @@ class sslRemove extends Command
         }
 
         if($site === null) {
-            $this->error('Invalid ID');
+            $this->error('Invalid Site or ID');
             return 1;
         }
 
