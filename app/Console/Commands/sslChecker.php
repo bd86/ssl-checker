@@ -86,12 +86,16 @@ class sslChecker extends Command
     public function getCertExperation($site)
     {
         $call = curl_init();
-        curl_setopt($call, CURLOPT_URL, $site);
-        curl_setopt($call, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($call, CURLOPT_NOBODY, true);
-        // curl_setopt($call, CURLOPT_VERBOSE, 1);
-        curl_setopt($call, CURLOPT_AUTOREFERER, true);
-        curl_setopt($call, CURLOPT_CERTINFO, true);
+        $settings = [
+            CURLOPT_URL => $site,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_NOBODY => true,
+            CURLOPT_AUTOREFERER => true,
+            CURLOPT_CERTINFO => true
+        ];
+
+        curl_setopt_array($call, $settings);
+
         curl_exec($call);
         $info = curl_getinfo($call);
         curl_close($call);
