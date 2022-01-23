@@ -42,7 +42,7 @@ class SslReminder extends Command
      */
     public function handle()
     {
-        //rerun checker in schedulaer before sending email
+        //rerun checker in scheduler before sending email
         $data = SslList::all();
         $now = new Carbon();
         $list = $data->filter(function($item) use ($now) {
